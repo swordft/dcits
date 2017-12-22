@@ -1,0 +1,54 @@
+stat table（高苏阳平台上的状态表）
+host | ip | s/n | cfg | time
+
+stat_hist table（用于计费的状态历史表）
+主机名    IP    唯一码    资源配置    创建时间    最近一次检测时间    当前是否正在运行
+host     | ip   | s/n     | cfg        | start     | last              | is_running
+
+四种情况：
+
+1.新建资源
+1）向stat_hist表中添加一条记录
+2）将start与last置为相同，即新资源创建时间（stat表中的time字段）
+3) 将is_running状态置为YES
+
+2.资源正在运行，并且配置未变化：
+1）在stat_hist表中找到相同host下最近的一条状态信息(is_running为YES的行），更新该行的last列，更新为最近一次配置检查时间
+
+3.资源正在运行，并且配置发生变化：
+1）在stat_hist表中找到相同host下最近的一条状态信息(is_running为YES的行），更新该行的last列，更新为新配置生效的时间（stat表中的time字段）
+2）将旧状态行的is_running置为NO
+3）向stat_hist表中插入一条记录，用来记录相同host下的新配置信息，并将start与last置为相同，即新配置生效时间
+4) 将新状态行的is_running置为YES
+
+4.资源删除
+1）在stat_hist表中找到相同host下最近的一条状态信息(is_running为YES的行），更新该行的last列，更新为最近一次配置检查时间
+2）将当前状态行的is_running置为NO
+
+
+最终，同一虚机在状态历史表(stat_hist)中可能会有多条记录，每一条代表该主机在不同配置下的运行时间区间，并且同一主机同一配置可能也存在多条记录（修改配置后又还原回去），最终根据不同状态的运行时间与该状态的单位费用可计算得最终结果
+
+
+info = {
+            host1:{
+                stat1:{
+                       time:[time1,time2]
+                       unit_price:10
+                }
+                stat2:{
+                       time:[time3,time4]
+                       unit_price:20
+                }
+                stat3:{
+                       time:[time5,time6]
+                       unit_price:30
+                }
+            }
+            host2:{
+                ...
+            }
+ }
+
+
+    
+
